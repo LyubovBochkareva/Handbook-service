@@ -8,6 +8,10 @@ import ru.cft.test.handbookservice.service.ServicesService;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import static ru.cft.test.handbookservice.util.validation.ValidMassage.DUPLICATE_OBJECT;
 
 /**
  * @author Lyubov Bochkareva
@@ -18,6 +22,7 @@ import java.util.List;
 public class ServicesServiceImpl implements ServicesService {
 
     private final ServicesRepository servicesRepository;
+	private static Logger logger = Logger.getLogger(ServicesServiceImpl.class.getName());
 
     public ServicesServiceImpl(ServicesRepository servicesRepository) {
         this.servicesRepository = servicesRepository;
@@ -32,6 +37,7 @@ public class ServicesServiceImpl implements ServicesService {
         List<ServicesEntity> servicesEntityList = new ArrayList<>();
         Iterable<ServicesEntity> servicesEntityIterable = servicesRepository.findAll();
         if (!servicesEntityIterable.iterator().hasNext()) {
+			logger.info("List services is empty");
             return Collections.emptyList();
         } else {
             servicesEntityIterable.forEach(servicesEntityList::add);
@@ -47,14 +53,17 @@ public class ServicesServiceImpl implements ServicesService {
      */
     public boolean saveServices(ServicesEntity servicesEntity) {
         if (servicesEntity == null) {
+			logger.log(Level.WARNING, "Service is null");
             return false;
         }
         if (!foundServicesEntityByName(servicesEntity.getName())) {
             ServicesEntity servicesEntityNew = new ServicesEntity();
             servicesEntityNew.setName(servicesEntity.getName());
             servicesRepository.save(servicesEntityNew);
+            logger.info("Service " + servicesEntity.getName() + " saved");
             return true;
         }
+		logger.log(Level.WARNING, DUPLICATE_OBJECT);
         return false;
     }
 
@@ -66,6 +75,7 @@ public class ServicesServiceImpl implements ServicesService {
      */
     public ServicesEntity findByIdServices(long servicesEntityId) {
         if (servicesEntityId < 0) {
+			logger.info("Service Id < 0");
             return null;
         }
         return servicesRepository.findById(servicesEntityId).orElse(null);
@@ -80,15 +90,19 @@ public class ServicesServiceImpl implements ServicesService {
      */
     public boolean updateServices(long servicesEntityId, ServicesEntity servicesEntity) {
         if (servicesEntity == null || servicesEntityId < 0) {
+			logger.info("Service is null or service id < 0");
             return false;
         }
         servicesEntity.setId(servicesEntityId);
         if (foundServicesEntityById(servicesEntityId)) {
             if (!foundServicesEntityByName(servicesEntity.getName())) {
                 servicesRepository.save(servicesEntity);
+                logger.info("Service " + servicesEntity.getName() + " updated");
                 return true;
             }
+			logger.log(Level.WARNING, DUPLICATE_OBJECT);
         }
+		logger.log(Level.WARNING, "Service " + servicesEntity.getName() +" is not update");
         return false;
     }
 
@@ -100,9 +114,11 @@ public class ServicesServiceImpl implements ServicesService {
      */
     public boolean deleteServices(long servicesEntityId) {
         if (servicesEntityId < 0 || !foundServicesEntityById(servicesEntityId)) {
+			logger.info("Service is not found by id " + servicesEntityId);
             return false;
         }
         servicesRepository.deleteById(servicesEntityId);
+		logger.info("Deleted service by id = " + servicesEntityId);
         return true;
     }
 
@@ -115,15 +131,19 @@ public class ServicesServiceImpl implements ServicesService {
      */
     public boolean partialUpdateServices(long servicesEntityId, ServicesEntity servicesEntity) {
         if (servicesEntity == null || servicesEntityId < 0) {
+			logger.info("Service is null or service id < 0");
             return false;
         }
         servicesEntity.setId(servicesEntityId);
         if (foundServicesEntityById(servicesEntityId)) {
             if (!foundServicesEntityByName(servicesEntity.getName())) {
                 servicesRepository.save(servicesEntity);
+                logger.info("Service " + servicesEntity.getName() + " partially updated");
                 return true;
             }
+			logger.log(Level.WARNING, "A service with that name " + servicesEntity.getName() + " already exists");
         }
+		logger.log(Level.WARNING,"Service " + servicesEntity.getName() +" is not update");
         return false;
     }
 

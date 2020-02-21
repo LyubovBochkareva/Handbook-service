@@ -8,6 +8,10 @@ import ru.cft.test.handbookservice.service.CityService;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import static ru.cft.test.handbookservice.util.validation.ValidMassage.DUPLICATE_OBJECT;
 
 /**
  * @author Lyubov Bochkareva
@@ -18,6 +22,7 @@ import java.util.List;
 public class CityServiceImpl implements CityService {
 
     private final CityRepository cityRepository;
+    private static Logger logger = Logger.getLogger(CityServiceImpl.class.getName());
 
     public CityServiceImpl(CityRepository cityRepository) {
         this.cityRepository = cityRepository;
@@ -32,6 +37,7 @@ public class CityServiceImpl implements CityService {
         List<CityEntity> cityEntityList = new ArrayList<>();
         Iterable<CityEntity> cityEntityIterable = cityRepository.findAll();
         if (!cityEntityIterable.iterator().hasNext()) {
+            logger.info("List cities is empty");
             return Collections.emptyList();
         } else {
             cityEntityIterable.forEach(cityEntityList::add);
@@ -47,14 +53,17 @@ public class CityServiceImpl implements CityService {
      */
     public boolean saveCity(CityEntity cityEntity) {
         if (cityEntity == null) {
+            logger.log(Level.WARNING, "City is null");
             return false;
         }
         if (!foundCityEntityByName(cityEntity.getName())) {
             CityEntity cityEntityNew = new CityEntity();
             cityEntityNew.setName(cityEntity.getName());
             cityRepository.save(cityEntityNew);
+            logger.info("City " + cityEntity.getName() + " saved");
             return true;
         }
+        logger.log(Level.WARNING, DUPLICATE_OBJECT);
         return false;
     }
 
@@ -66,6 +75,7 @@ public class CityServiceImpl implements CityService {
      */
     public CityEntity findByIdCity(long cityEntityId) {
         if (cityEntityId < 0) {
+            logger.info("City Id < 0");
             return null;
         }
         return cityRepository.findById(cityEntityId).orElse(null);
@@ -80,15 +90,19 @@ public class CityServiceImpl implements CityService {
      */
     public boolean updateCity(long cityEntityId, CityEntity cityEntity) {
         if (cityEntity == null || cityEntityId < 0) {
+            logger.info("City is null OR city id < 0");
             return false;
         }
         cityEntity.setId(cityEntityId);
         if (foundCityEntityById(cityEntityId)) {
             if (!foundCityEntityByName(cityEntity.getName())) {
                 cityRepository.save(cityEntity);
+                logger.info("City " + cityEntity.getName() + " updated");
                 return true;
             }
+            logger.log(Level.WARNING, DUPLICATE_OBJECT);
         }
+        logger.log(Level.WARNING, "City " + cityEntity.getName() +" is not update");
         return false;
     }
 
@@ -100,9 +114,11 @@ public class CityServiceImpl implements CityService {
      */
     public boolean deleteCity(long cityEntityId) {
         if (cityEntityId < 0 || !foundCityEntityById(cityEntityId)) {
+			logger.info("City id < 0 OR City is not found by ID " + cityEntityId);
             return false;
         }
         cityRepository.deleteById(cityEntityId);
+        logger.info("Deleted city by id = " + cityEntityId);
         return true;
     }
 
@@ -115,15 +131,18 @@ public class CityServiceImpl implements CityService {
      */
     public boolean partialUpdateCity(long cityEntityId, CityEntity cityEntity) {
         if (cityEntity == null || cityEntityId < 0) {
+			logger.info("City is null OR city id < 0");
             return false;
         }
         cityEntity.setId(cityEntityId);
         if (foundCityEntityById(cityEntityId)) {
             if (!foundCityEntityByName(cityEntity.getName())) {
                 cityRepository.save(cityEntity);
+                logger.info("City " + cityEntity.getName() + " partially updated");
                 return true;
             }
         }
+        logger.log(Level.WARNING,"City " + cityEntity.getName() +" is not update");
         return false;
     }
 

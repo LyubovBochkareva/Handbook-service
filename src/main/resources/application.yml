@@ -19,3 +19,7 @@ spring:
     url: jdbc:postgresql://localhost:5432/postgres?createDatabaseIfNotExist=true&autoReconnect=true&useSSL=false
     username: cft
     password: cft
+
+logging:
+  file:
+    name: handBookService_log.txt

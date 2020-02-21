@@ -14,6 +14,8 @@ import ru.cft.test.handbookservice.service.ServingPointService;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author Lyubov Bochkareva
@@ -27,6 +29,7 @@ public class ServingPointServiceImpl implements ServingPointService {
     private final CountryRepository countryRepository;
     private final ServicesRepository servicesRepository;
     private final ServingPointRepository servingPointRepository;
+    private static Logger logger = Logger.getLogger(ServingPointServiceImpl.class.getName());
 
     public ServingPointServiceImpl(ServingPointRepository servingPointRepository,
                                    CityRepository cityRepository,
@@ -47,6 +50,7 @@ public class ServingPointServiceImpl implements ServingPointService {
         List<ServingPointEntity> servingPointEntityList = new ArrayList<>();
         Iterable<ServingPointEntity> servingPointEntityIterable = servingPointRepository.findAll();
         if (!servingPointEntityIterable.iterator().hasNext()) {
+            logger.info("List servingPoint is empty");
             return Collections.emptyList();
         } else {
             servingPointEntityIterable.forEach(servingPointEntityList::add);
@@ -62,6 +66,7 @@ public class ServingPointServiceImpl implements ServingPointService {
      */
     public boolean addServingPoint(ServingPointEntity servingPointEntity) {
         if (servingPointEntity == null) {
+            logger.info("ServingPoint is null");
             return false;
         }
         return saveServingPoint(servingPointEntity);
@@ -75,6 +80,7 @@ public class ServingPointServiceImpl implements ServingPointService {
      */
     public ServingPointEntity findByIdServingPoint(long servingPointEntityId) {
         if (servingPointEntityId < 0) {
+            logger.info("ServingPoint Id < 0");
             return null;
         }
         return servingPointRepository.findById(servingPointEntityId).orElse(null);
@@ -89,12 +95,14 @@ public class ServingPointServiceImpl implements ServingPointService {
      */
     public boolean updateServingPoint(long servingPointEntityId, ServingPointEntity servingPointEntity) {
         if (servingPointEntity == null || servingPointEntityId < 0) {
+			logger.info("ServingPoint is null or servingPoint id < 0");
             return false;
         }
         servingPointEntity.setId(servingPointEntityId);
         if (foundServingPointEntityById(servingPointEntityId)) {
             return saveServingPoint(servingPointEntity);
         }
+		logger.log(Level.WARNING, "ServingPoint " + servingPointEntity.getName() +" is not found");
         return false;
     }
 
@@ -106,9 +114,11 @@ public class ServingPointServiceImpl implements ServingPointService {
      */
     public boolean deleteServingPoint(long servingPointEntityId) {
         if (servingPointEntityId < 0 || !foundServingPointEntityById(servingPointEntityId)) {
+			logger.info("ServingPoint ID < 0 OR ServingPoint is not found by id " + servingPointEntityId);
             return false;
         }
         servingPointRepository.deleteById(servingPointEntityId);
+		logger.info("Deleted servingPoint by id = " + servingPointEntityId);
         return true;
     }
 
@@ -121,12 +131,14 @@ public class ServingPointServiceImpl implements ServingPointService {
      */
     public boolean partialUpdateServingPoint(long servingPointEntityId, ServingPointEntity servingPointEntity) {
         if (servingPointEntity == null || servingPointEntityId < 0) {
+			logger.info("ServingPoint is null OR servingPoint id < 0");
             return false;
         }
         servingPointEntity.setId(servingPointEntityId);
         if (foundServingPointEntityById(servingPointEntityId)) {
             return saveServingPoint(servingPointEntity);
         }
+        logger.info("ServingPoint is not found");
         return false;
     }
 
@@ -139,20 +151,24 @@ public class ServingPointServiceImpl implements ServingPointService {
      */
     public boolean addServicesInServingPoint(long servicesId, long servingPointId) {
         if (servicesId < 0 || servingPointId < 0) {
+			logger.info("Services Id < 0 OR servingPoint id < 0");
             return false;
         }
         ServingPointEntity servingPointEntity = servingPointRepository.findById(servingPointId).orElse(null);
         ServicesEntity servicesEntity = servicesRepository.findById(servicesId).orElse(null);
         if (servingPointEntity == null || servicesEntity == null) {
+			logger.info("ServingPoint is null OR service is null");
             return false;
         } else {
             List<ServicesEntity> listServicesServingPoint = servingPointEntity.getServicesEntityList();
             if (listServicesServingPoint.contains(servicesEntity)) {
+            	logger.info("Service " + servicesEntity.getName() + " already added");
                 return false;
             } else {
                 listServicesServingPoint.add(servicesEntity);
                 servingPointEntity.setServicesEntityList(listServicesServingPoint);
                 servingPointRepository.save(servingPointEntity);
+                logger.info("Service " + servingPointEntity.getName() + " added in to servingPoint " + servingPointEntity.getName());
                 return true;
             }
         }
@@ -167,11 +183,13 @@ public class ServingPointServiceImpl implements ServingPointService {
      */
     public boolean deleteServicesInServingPoint(long servicesId, long servingPointId) {
         if (servicesId < 0 || servingPointId < 0) {
+			logger.info("Services Id < 0 OR servingPoint id < 0");
             return false;
         }
         ServingPointEntity servingPointEntity = servingPointRepository.findById(servingPointId).orElse(null);
         ServicesEntity servicesEntity = servicesRepository.findById(servicesId).orElse(null);
         if (servingPointEntity == null || servicesEntity == null) {
+			logger.info("ServingPoint is null OR service is null");
             return false;
         } else {
             List<ServicesEntity> listServicesServingPoint = servingPointEntity.getServicesEntityList();
@@ -179,8 +197,10 @@ public class ServingPointServiceImpl implements ServingPointService {
                 listServicesServingPoint.remove(servicesEntity);
                 servingPointEntity.setServicesEntityList(listServicesServingPoint);
                 servingPointRepository.save(servingPointEntity);
+                logger.info("Service " + servingPointEntity.getName() + " deleted from servingPoint " + servingPointEntity.getName());
                 return true;
             }
+            logger.info("ServingPoint " + servingPointEntity.getName() + " is not contains service " + servicesEntity.getName());
             return false;
         }
     }

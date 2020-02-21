@@ -8,6 +8,10 @@ import ru.cft.test.handbookservice.service.CountryService;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import static ru.cft.test.handbookservice.util.validation.ValidMassage.DUPLICATE_OBJECT;
 
 /**
  * @author Lyubov Bochkareva
@@ -18,6 +22,7 @@ import java.util.List;
 public class CountryServiceImpl implements CountryService {
 
     private final CountryRepository countryRepository;
+    private static Logger logger = Logger.getLogger(CountryServiceImpl.class.getName());
 
     public CountryServiceImpl(CountryRepository countryRepository) {
         this.countryRepository = countryRepository;
@@ -32,6 +37,7 @@ public class CountryServiceImpl implements CountryService {
         List<CountryEntity> countryEntityList = new ArrayList<>();
         Iterable<CountryEntity> countryEntityIterable = countryRepository.findAll();
         if (!countryEntityIterable.iterator().hasNext()) {
+            logger.info("List countries is empty");
             return Collections.emptyList();
         } else {
             countryEntityIterable.forEach(countryEntityList::add);
@@ -47,14 +53,17 @@ public class CountryServiceImpl implements CountryService {
      */
     public boolean saveCountry(CountryEntity countryEntity) {
         if (countryEntity == null) {
+            logger.log(Level.WARNING, "Country is null");
             return false;
         }
         if (!foundCountryEntityByName(countryEntity.getName())) {
             CountryEntity countryEntityNew = new CountryEntity();
             countryEntityNew.setName(countryEntity.getName());
             countryRepository.save(countryEntityNew);
+            logger.info("Country " + countryEntity.getName() + " saved");
             return true;
         }
+        logger.log(Level.WARNING, DUPLICATE_OBJECT);
         return false;
     }
 
@@ -66,6 +75,7 @@ public class CountryServiceImpl implements CountryService {
      */
     public CountryEntity findByIdCountry(long countryEntityId) {
         if (countryEntityId < 0) {
+            logger.info("Country Id < 0");
             return null;
         }
         return countryRepository.findById(countryEntityId).orElse(null);
@@ -80,15 +90,19 @@ public class CountryServiceImpl implements CountryService {
      */
     public boolean updateCountry(long countryEntityId, CountryEntity countryEntity) {
         if (countryEntity == null || countryEntityId < 0) {
+            logger.info("Country is null or country id < 0");
             return false;
         }
         countryEntity.setId(countryEntityId);
         if (foundCountryEntityById(countryEntityId)) {
             if (!foundCountryEntityByName(countryEntity.getName())) {
                 countryRepository.save(countryEntity);
+                logger.info("Country " + countryEntity.getName() + " updated");
                 return true;
             }
+            logger.log(Level.WARNING, DUPLICATE_OBJECT);
         }
+        logger.log(Level.WARNING, "Country " + countryEntity.getName() +" is not update");
         return false;
     }
 
@@ -100,9 +114,11 @@ public class CountryServiceImpl implements CountryService {
      */
     public boolean deleteCountry(long countryEntityId) {
         if (countryEntityId < 0 || !foundCountryEntityById(countryEntityId)) {
+            logger.info("Country is not found by id " + countryEntityId);
             return false;
         }
         countryRepository.deleteById(countryEntityId);
+        logger.info("Deleted country by id = " + countryEntityId);
         return true;
     }
 
@@ -115,15 +131,19 @@ public class CountryServiceImpl implements CountryService {
      */
     public boolean partialUpdateCountry(long countryEntityId, CountryEntity countryEntity) {
         if (countryEntity == null || countryEntityId < 0) {
+            logger.info("Country is null or country id < 0");
             return false;
         }
         countryEntity.setId(countryEntityId);
         if (foundCountryEntityById(countryEntityId)) {
             if (!foundCountryEntityByName(countryEntity.getName())) {
                 countryRepository.save(countryEntity);
+                logger.info("Country " + countryEntity.getName() + " partially updated");
                 return true;
             }
+            logger.log(Level.WARNING, "A country with that name " + countryEntity.getName() + " already exists");
         }
+        logger.log(Level.WARNING,"Country " + countryEntity.getName() +" is not update");
         return false;
     }
 
